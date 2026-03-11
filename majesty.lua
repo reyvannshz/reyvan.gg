@@ -1,0 +1,850 @@
+-- ========== MAJESTY ONTOP - INVENTORY TRACKER DENGAN MINIMIZE BUTTON ==========
+-- Bisa lihat jumlah item di inventory (Water, Gelatin, Sugar Block Bag, Empty Bag)
+-- VERSI FIX: URUTAN Water → Sugar → Gelatin → Bag (dengan delay 1 detik)
+-- FITUR BARU: Tombol minimize (kecilin GUI)
+
+-- Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local Camera = Workspace.CurrentCamera
+local TweenService = game:GetService("TweenService")
+
+-- Variables
+local LocalPlayer = Players.LocalPlayer
+local AutoMS_Running = false
+local isMinimized = false
+local InventoryItems = {
+    Water = 0,
+    Gelatin = 0,
+    Sugar = 0,
+    Bag = 0
+}
+
+-- Tunggu character spawn
+repeat task.wait() until LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+
+-- ========== GUI MAJESTY DENGAN INVENTORY TRACKER ==========
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MAJESTY ONTOP"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 350, 0, 550)
+mainFrame.Position = UDim2.new(0, 30, 0, 30)
+mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.ClipsDescendants = true
+mainFrame.Parent = screenGui
+
+-- Shadow
+local shadow = Instance.new("ImageLabel")
+shadow.Size = UDim2.new(1, 20, 1, 20)
+shadow.Position = UDim2.new(0, -10, 0, -10)
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://5553946656"
+shadow.ImageColor3 = Color3.fromRGB(180, 0, 255)
+shadow.ImageTransparency = 0.7
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 10, 10)
+shadow.Parent = mainFrame
+
+-- Border
+local border = Instance.new("Frame")
+border.Size = UDim2.new(1, 0, 1, 0)
+border.BackgroundTransparency = 1
+border.BorderSizePixel = 3
+border.BorderColor3 = Color3.fromRGB(180, 0, 255)
+border.Parent = mainFrame
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 15)
+corner.Parent = mainFrame
+
+-- Header
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 70)
+header.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+header.BorderSizePixel = 0
+header.Parent = mainFrame
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 15)
+headerCorner.Parent = header
+
+-- Gradient Header
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 0, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(120, 0, 200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 150))
+})
+gradient.Rotation = 45
+gradient.Parent = header
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -105, 1, 0)
+title.Position = UDim2.new(0, 15, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "MAJESTY ONTOP"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextStrokeColor3 = Color3.fromRGB(150, 0, 255)
+title.TextStrokeTransparency = 0.4
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 26
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
+
+local subtitle = Instance.new("TextLabel")
+subtitle.Size = UDim2.new(1, -105, 0, 20)
+subtitle.Position = UDim2.new(0, 15, 0, 40)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "Inventory Tracker + Auto MS"
+subtitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+subtitle.Font = Enum.Font.Gotham
+subtitle.TextSize = 12
+subtitle.TextXAlignment = Enum.TextXAlignment.Left
+subtitle.Parent = header
+
+-- Button Frame (untuk 3 tombol)
+local buttonFrame = Instance.new("Frame")
+buttonFrame.Size = UDim2.new(0, 105, 1, 0)
+buttonFrame.Position = UDim2.new(1, -110, 0, 0)
+buttonFrame.BackgroundTransparency = 1
+buttonFrame.Parent = header
+
+-- Minimize Button
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.new(0, 30, 0, 30)
+minBtn.Position = UDim2.new(0, 0, 0, 20)
+minBtn.BackgroundColor3 = Color3.fromRGB(255, 180, 0)
+minBtn.Text = "−"
+minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minBtn.TextSize = 24
+minBtn.Font = Enum.Font.GothamBold
+minBtn.BorderSizePixel = 0
+minBtn.Parent = buttonFrame
+
+local minCorner = Instance.new("UICorner")
+minCorner.CornerRadius = UDim.new(0, 8)
+minCorner.Parent = minBtn
+
+-- Settings Button (future use)
+local settingsBtn = Instance.new("TextButton")
+settingsBtn.Size = UDim2.new(0, 30, 0, 30)
+settingsBtn.Position = UDim2.new(0, 35, 0, 20)
+settingsBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+settingsBtn.Text = "⚙️"
+settingsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+settingsBtn.TextSize = 18
+settingsBtn.Font = Enum.Font.GothamBold
+settingsBtn.BorderSizePixel = 0
+settingsBtn.Parent = buttonFrame
+
+local settingsCorner = Instance.new("UICorner")
+settingsCorner.CornerRadius = UDim.new(0, 8)
+settingsCorner.Parent = settingsBtn
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(0, 70, 0, 20)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextSize = 22
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.BorderSizePixel = 0
+closeBtn.Parent = buttonFrame
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = closeBtn
+
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+-- Content Frame (yang akan di-minimize)
+local content = Instance.new("ScrollingFrame")
+content.Size = UDim2.new(1, -20, 1, -90)
+content.Position = UDim2.new(0, 10, 0, 80)
+content.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+content.BorderSizePixel = 0
+content.ScrollBarThickness = 5
+content.ScrollBarImageColor3 = Color3.fromRGB(180, 0, 255)
+content.CanvasSize = UDim2.new(0, 0, 0, 0)
+content.Parent = mainFrame
+
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 8)
+contentCorner.Parent = content
+
+-- ========== INVENTORY TRACKER SECTION ==========
+local invTitle = Instance.new("TextLabel")
+invTitle.Size = UDim2.new(1, -10, 0, 30)
+invTitle.Position = UDim2.new(0, 5, 0, 5)
+invTitle.BackgroundTransparency = 1
+invTitle.Text = "📦 INVENTORY"
+invTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+invTitle.Font = Enum.Font.GothamBlack
+invTitle.TextSize = 18
+invTitle.TextXAlignment = Enum.TextXAlignment.Left
+invTitle.Parent = content
+
+-- Water Count
+local waterFrame = Instance.new("Frame")
+waterFrame.Size = UDim2.new(1, -10, 0, 45)
+waterFrame.Position = UDim2.new(0, 5, 0, 40)
+waterFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+waterFrame.Parent = content
+
+local waterCorner = Instance.new("UICorner")
+waterCorner.CornerRadius = UDim.new(0, 8)
+waterCorner.Parent = waterFrame
+
+local waterIcon = Instance.new("TextLabel")
+waterIcon.Size = UDim2.new(0, 40, 1, 0)
+waterIcon.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+waterIcon.Text = "💧"
+waterIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+waterIcon.Font = Enum.Font.GothamBlack
+waterIcon.TextSize = 24
+waterIcon.Parent = waterFrame
+
+local waterIconCorner = Instance.new("UICorner")
+waterIconCorner.CornerRadius = UDim.new(0, 8)
+waterIconCorner.Parent = waterIcon
+
+local waterName = Instance.new("TextLabel")
+waterName.Size = UDim2.new(0, 120, 1, 0)
+waterName.Position = UDim2.new(0, 45, 0, 0)
+waterName.BackgroundTransparency = 1
+waterName.Text = "Water"
+waterName.TextColor3 = Color3.fromRGB(255, 255, 255)
+waterName.Font = Enum.Font.GothamBold
+waterName.TextSize = 16
+waterName.TextXAlignment = Enum.TextXAlignment.Left
+waterName.Parent = waterFrame
+
+local waterCount = Instance.new("TextLabel")
+waterCount.Size = UDim2.new(1, -170, 1, 0)
+waterCount.Position = UDim2.new(0, 170, 0, 0)
+waterCount.BackgroundTransparency = 1
+waterCount.Text = "0"
+waterCount.TextColor3 = Color3.fromRGB(0, 255, 255)
+waterCount.Font = Enum.Font.GothamBlack
+waterCount.TextSize = 20
+waterCount.TextXAlignment = Enum.TextXAlignment.Right
+waterCount.Parent = waterFrame
+
+-- Gelatin Count
+local gelatinFrame = Instance.new("Frame")
+gelatinFrame.Size = UDim2.new(1, -10, 0, 45)
+gelatinFrame.Position = UDim2.new(0, 5, 0, 90)
+gelatinFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+gelatinFrame.Parent = content
+
+local gelatinCorner = Instance.new("UICorner")
+gelatinCorner.CornerRadius = UDim.new(0, 8)
+gelatinCorner.Parent = gelatinFrame
+
+local gelatinIcon = Instance.new("TextLabel")
+gelatinIcon.Size = UDim2.new(0, 40, 1, 0)
+gelatinIcon.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
+gelatinIcon.Text = "🍮"
+gelatinIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+gelatinIcon.Font = Enum.Font.GothamBlack
+gelatinIcon.TextSize = 24
+gelatinIcon.Parent = gelatinFrame
+
+local gelatinIconCorner = Instance.new("UICorner")
+gelatinIconCorner.CornerRadius = UDim.new(0, 8)
+gelatinIconCorner.Parent = gelatinIcon
+
+local gelatinName = Instance.new("TextLabel")
+gelatinName.Size = UDim2.new(0, 120, 1, 0)
+gelatinName.Position = UDim2.new(0, 45, 0, 0)
+gelatinName.BackgroundTransparency = 1
+gelatinName.Text = "Gelatin"
+gelatinName.TextColor3 = Color3.fromRGB(255, 255, 255)
+gelatinName.Font = Enum.Font.GothamBold
+gelatinName.TextSize = 16
+gelatinName.TextXAlignment = Enum.TextXAlignment.Left
+gelatinName.Parent = gelatinFrame
+
+local gelatinCount = Instance.new("TextLabel")
+gelatinCount.Size = UDim2.new(1, -170, 1, 0)
+gelatinCount.Position = UDim2.new(0, 170, 0, 0)
+gelatinCount.BackgroundTransparency = 1
+gelatinCount.Text = "0"
+gelatinCount.TextColor3 = Color3.fromRGB(255, 200, 0)
+gelatinCount.Font = Enum.Font.GothamBlack
+gelatinCount.TextSize = 20
+gelatinCount.TextXAlignment = Enum.TextXAlignment.Right
+gelatinCount.Parent = gelatinFrame
+
+-- Sugar Count
+local sugarFrame = Instance.new("Frame")
+sugarFrame.Size = UDim2.new(1, -10, 0, 45)
+sugarFrame.Position = UDim2.new(0, 5, 0, 140)
+sugarFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+sugarFrame.Parent = content
+
+local sugarCorner = Instance.new("UICorner")
+sugarCorner.CornerRadius = UDim.new(0, 8)
+sugarCorner.Parent = sugarFrame
+
+local sugarIcon = Instance.new("TextLabel")
+sugarIcon.Size = UDim2.new(0, 40, 1, 0)
+sugarIcon.BackgroundColor3 = Color3.fromRGB(255, 100, 255)
+sugarIcon.Text = "🧊"
+sugarIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+sugarIcon.Font = Enum.Font.GothamBlack
+sugarIcon.TextSize = 24
+sugarIcon.Parent = sugarFrame
+
+local sugarIconCorner = Instance.new("UICorner")
+sugarIconCorner.CornerRadius = UDim.new(0, 8)
+sugarIconCorner.Parent = sugarIcon
+
+local sugarName = Instance.new("TextLabel")
+sugarName.Size = UDim2.new(0, 120, 1, 0)
+sugarName.Position = UDim2.new(0, 45, 0, 0)
+sugarName.BackgroundTransparency = 1
+sugarName.Text = "Sugar Block"
+sugarName.TextColor3 = Color3.fromRGB(255, 255, 255)
+sugarName.Font = Enum.Font.GothamBold
+sugarName.TextSize = 16
+sugarName.TextXAlignment = Enum.TextXAlignment.Left
+sugarName.Parent = sugarFrame
+
+local sugarCount = Instance.new("TextLabel")
+sugarCount.Size = UDim2.new(1, -170, 1, 0)
+sugarCount.Position = UDim2.new(0, 170, 0, 0)
+sugarCount.BackgroundTransparency = 1
+sugarCount.Text = "0"
+sugarCount.TextColor3 = Color3.fromRGB(255, 100, 255)
+sugarCount.Font = Enum.Font.GothamBlack
+sugarCount.TextSize = 20
+sugarCount.TextXAlignment = Enum.TextXAlignment.Right
+sugarCount.Parent = sugarFrame
+
+-- Bag Count
+local bagFrame = Instance.new("Frame")
+bagFrame.Size = UDim2.new(1, -10, 0, 45)
+bagFrame.Position = UDim2.new(0, 5, 0, 190)
+bagFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+bagFrame.Parent = content
+
+local bagCorner = Instance.new("UICorner")
+bagCorner.CornerRadius = UDim.new(0, 8)
+bagCorner.Parent = bagFrame
+
+local bagIcon = Instance.new("TextLabel")
+bagIcon.Size = UDim2.new(0, 40, 1, 0)
+bagIcon.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+bagIcon.Text = "👜"
+bagIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+bagIcon.Font = Enum.Font.GothamBlack
+bagIcon.TextSize = 24
+bagIcon.Parent = bagFrame
+
+local bagIconCorner = Instance.new("UICorner")
+bagIconCorner.CornerRadius = UDim.new(0, 8)
+bagIconCorner.Parent = bagIcon
+
+local bagName = Instance.new("TextLabel")
+bagName.Size = UDim2.new(0, 120, 1, 0)
+bagName.Position = UDim2.new(0, 45, 0, 0)
+bagName.BackgroundTransparency = 1
+bagName.Text = "Empty Bag"
+bagName.TextColor3 = Color3.fromRGB(255, 255, 255)
+bagName.Font = Enum.Font.GothamBold
+bagName.TextSize = 16
+bagName.TextXAlignment = Enum.TextXAlignment.Left
+bagName.Parent = bagFrame
+
+local bagCount = Instance.new("TextLabel")
+bagCount.Size = UDim2.new(1, -170, 1, 0)
+bagCount.Position = UDim2.new(0, 170, 0, 0)
+bagCount.BackgroundTransparency = 1
+bagCount.Text = "0"
+bagCount.TextColor3 = Color3.fromRGB(100, 255, 100)
+bagCount.Font = Enum.Font.GothamBlack
+bagCount.TextSize = 20
+bagCount.TextXAlignment = Enum.TextXAlignment.Right
+bagCount.Parent = bagFrame
+
+-- Separator
+local separator = Instance.new("Frame")
+separator.Size = UDim2.new(1, -20, 0, 2)
+separator.Position = UDim2.new(0, 10, 0, 245)
+separator.BackgroundColor3 = Color3.fromRGB(180, 0, 255)
+separator.BorderSizePixel = 0
+separator.Parent = content
+
+-- ========== AUTO MS SECTION ==========
+local autoTitle = Instance.new("TextLabel")
+autoTitle.Size = UDim2.new(1, -10, 0, 30)
+autoTitle.Position = UDim2.new(0, 5, 0, 255)
+autoTitle.BackgroundTransparency = 1
+autoTitle.Text = "⚙️ AUTO MARSHMELLOW"
+autoTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoTitle.Font = Enum.Font.GothamBlack
+autoTitle.TextSize = 18
+autoTitle.TextXAlignment = Enum.TextXAlignment.Left
+autoTitle.Parent = content
+
+-- Status
+local statusFrame = Instance.new("Frame")
+statusFrame.Size = UDim2.new(1, -10, 0, 50)
+statusFrame.Position = UDim2.new(0, 5, 0, 290)
+statusFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+statusFrame.Parent = content
+
+local statusCorner = Instance.new("UICorner")
+statusCorner.CornerRadius = UDim.new(0, 8)
+statusCorner.Parent = statusFrame
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(0, 100, 1, 0)
+statusLabel.Position = UDim2.new(0, 10, 0, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "STATUS:"
+statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+statusLabel.Font = Enum.Font.GothamBold
+statusLabel.TextSize = 14
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.Parent = statusFrame
+
+local statusValue = Instance.new("TextLabel")
+statusValue.Size = UDim2.new(1, -120, 1, 0)
+statusValue.Position = UDim2.new(0, 100, 0, 0)
+statusValue.BackgroundTransparency = 1
+statusValue.Text = "OFF"
+statusValue.TextColor3 = Color3.fromRGB(255, 80, 80)
+statusValue.Font = Enum.Font.GothamBlack
+statusValue.TextSize = 20
+statusValue.TextXAlignment = Enum.TextXAlignment.Left
+statusValue.Parent = statusFrame
+
+-- Phase
+local phaseFrame = Instance.new("Frame")
+phaseFrame.Size = UDim2.new(1, -10, 0, 50)
+phaseFrame.Position = UDim2.new(0, 5, 0, 345)
+phaseFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+phaseFrame.Parent = content
+
+local phaseCorner = Instance.new("UICorner")
+phaseCorner.CornerRadius = UDim.new(0, 8)
+phaseCorner.Parent = phaseFrame
+
+local phaseLabel = Instance.new("TextLabel")
+phaseLabel.Size = UDim2.new(0, 100, 1, 0)
+phaseLabel.Position = UDim2.new(0, 10, 0, 0)
+phaseLabel.BackgroundTransparency = 1
+phaseLabel.Text = "PHASE:"
+phaseLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+phaseLabel.Font = Enum.Font.GothamBold
+phaseLabel.TextSize = 14
+phaseLabel.TextXAlignment = Enum.TextXAlignment.Left
+phaseLabel.Parent = phaseFrame
+
+local phaseValue = Instance.new("TextLabel")
+phaseValue.Size = UDim2.new(1, -120, 1, 0)
+phaseValue.Position = UDim2.new(0, 100, 0, 0)
+phaseValue.BackgroundTransparency = 1
+phaseValue.Text = "Water"
+phaseValue.TextColor3 = Color3.fromRGB(100, 200, 255)
+phaseValue.Font = Enum.Font.GothamBlack
+phaseValue.TextSize = 18
+phaseValue.TextXAlignment = Enum.TextXAlignment.Left
+phaseValue.Parent = phaseFrame
+
+-- Timer
+local timerFrame = Instance.new("Frame")
+timerFrame.Size = UDim2.new(1, -10, 0, 50)
+timerFrame.Position = UDim2.new(0, 5, 0, 400)
+timerFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+timerFrame.Parent = content
+
+local timerCorner = Instance.new("UICorner")
+timerCorner.CornerRadius = UDim.new(0, 8)
+timerCorner.Parent = timerFrame
+
+local timerLabel = Instance.new("TextLabel")
+timerLabel.Size = UDim2.new(0, 100, 1, 0)
+timerLabel.Position = UDim2.new(0, 10, 0, 0)
+timerLabel.BackgroundTransparency = 1
+timerLabel.Text = "TIME:"
+timerLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+timerLabel.Font = Enum.Font.GothamBold
+timerLabel.TextSize = 14
+timerLabel.TextXAlignment = Enum.TextXAlignment.Left
+timerLabel.Parent = timerFrame
+
+local timerValue = Instance.new("TextLabel")
+timerValue.Size = UDim2.new(1, -120, 1, 0)
+timerValue.Position = UDim2.new(0, 100, 0, 0)
+timerValue.BackgroundTransparency = 1
+timerValue.Text = "0s"
+timerValue.TextColor3 = Color3.fromRGB(255, 255, 100)
+timerValue.Font = Enum.Font.GothamBlack
+timerValue.TextSize = 18
+timerValue.TextXAlignment = Enum.TextXAlignment.Left
+timerValue.Parent = timerFrame
+
+-- Buttons
+local btnFrame = Instance.new("Frame")
+btnFrame.Size = UDim2.new(1, -10, 0, 50)
+btnFrame.Position = UDim2.new(0, 5, 0, 460)
+btnFrame.BackgroundTransparency = 1
+btnFrame.Parent = content
+
+local startBtn = Instance.new("TextButton")
+startBtn.Size = UDim2.new(0.45, -5, 1, 0)
+startBtn.Position = UDim2.new(0, 0, 0, 0)
+startBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+startBtn.Text = "START"
+startBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+startBtn.Font = Enum.Font.GothamBlack
+startBtn.TextSize = 18
+startBtn.BorderSizePixel = 0
+startBtn.Parent = btnFrame
+
+local startCorner = Instance.new("UICorner")
+startCorner.CornerRadius = UDim.new(0, 10)
+startCorner.Parent = startBtn
+
+local stopBtn = Instance.new("TextButton")
+stopBtn.Size = UDim2.new(0.45, -5, 1, 0)
+stopBtn.Position = UDim2.new(0.55, 5, 0, 0)
+stopBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+stopBtn.Text = "STOP"
+stopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+stopBtn.Font = Enum.Font.GothamBlack
+stopBtn.TextSize = 18
+stopBtn.BorderSizePixel = 0
+stopBtn.Parent = btnFrame
+
+local stopCorner = Instance.new("UICorner")
+stopCorner.CornerRadius = UDim.new(0, 10)
+stopCorner.Parent = stopBtn
+
+-- Delay Info
+local delayInfo = Instance.new("TextLabel")
+delayInfo.Size = UDim2.new(1, -20, 0, 20)
+delayInfo.Position = UDim2.new(0, 10, 0, 515)
+delayInfo.BackgroundTransparency = 1
+delayInfo.Text = "⏱️ Delay 1 detik antara Sugar dan Gelatin"
+delayInfo.TextColor3 = Color3.fromRGB(255, 200, 100)
+delayInfo.Font = Enum.Font.Gotham
+delayInfo.TextSize = 11
+delayInfo.TextXAlignment = Enum.TextXAlignment.Left
+delayInfo.Parent = content
+
+-- Update CanvasSize
+content.CanvasSize = UDim2.new(0, 0, 0, 540)
+
+-- ========== FUNGSI MINIMIZE ==========
+local function toggleMinimize()
+    isMinimized = not isMinimized
+    
+    if isMinimized then
+        -- Minimize: kecilin frame, hide content
+        mainFrame:TweenSize(UDim2.new(0, 350, 0, 70), "Out", "Quad", 0.2, true)
+        content.Visible = false
+        minBtn.Text = "□"  -- Ganti icon jadi maximize
+    else
+        -- Maximize: balikin ukuran, show content
+        mainFrame:TweenSize(UDim2.new(0, 350, 0, 550), "Out", "Quad", 0.2, true)
+        task.wait(0.2)
+        content.Visible = true
+        minBtn.Text = "−"  -- Ganti icon jadi minimize
+    end
+end
+
+minBtn.MouseButton1Click:Connect(toggleMinimize)
+
+-- Settings button (untuk future use)
+settingsBtn.MouseButton1Click:Connect(function()
+    print("Settings button clicked - Future feature")
+    -- Bisa ditambah fitur setting nanti
+end)
+
+-- ========== FUNGSI INVENTORY TRACKER ==========
+local function updateInventory()
+    pcall(function()
+        local water = 0
+        local gelatin = 0
+        local sugar = 0
+        local bag = 0
+        
+        -- Cek di Backpack
+        if LocalPlayer and LocalPlayer:FindFirstChild("Backpack") then
+            for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+                if tool:IsA("Tool") then
+                    local name = string.lower(tool.Name)
+                    
+                    if name:find("water") then
+                        water = water + 1
+                    elseif name:find("gelatin") or name:find("gel") then
+                        gelatin = gelatin + 1
+                    elseif name:find("sugar") or name:find("gula") or name:find("block") then
+                        sugar = sugar + 1
+                    elseif name:find("bag") or name:find("tas") or name:find("empty") then
+                        bag = bag + 1
+                    end
+                end
+            end
+        end
+        
+        -- Cek di Character (yang lagi dipegang)
+        if LocalPlayer.Character then
+            for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
+                if tool:IsA("Tool") then
+                    local name = string.lower(tool.Name)
+                    
+                    if name:find("water") then
+                        water = water + 1
+                    elseif name:find("gelatin") or name:find("gel") then
+                        gelatin = gelatin + 1
+                    elseif name:find("sugar") or name:find("gula") or name:find("block") then
+                        sugar = sugar + 1
+                    elseif name:find("bag") or name:find("tas") or name:find("empty") then
+                        bag = bag + 1
+                    end
+                end
+            end
+        end
+        
+        -- Update UI
+        waterCount.Text = tostring(water)
+        gelatinCount.Text = tostring(gelatin)
+        sugarCount.Text = tostring(sugar)
+        bagCount.Text = tostring(bag)
+        
+        -- Update warna berdasarkan jumlah
+        if water > 0 then
+            waterCount.TextColor3 = Color3.fromRGB(0, 255, 255)
+        else
+            waterCount.TextColor3 = Color3.fromRGB(150, 150, 150)
+        end
+        
+        if gelatin > 0 then
+            gelatinCount.TextColor3 = Color3.fromRGB(255, 200, 0)
+        else
+            gelatinCount.TextColor3 = Color3.fromRGB(150, 150, 150)
+        end
+        
+        if sugar > 0 then
+            sugarCount.TextColor3 = Color3.fromRGB(255, 100, 255)
+        else
+            sugarCount.TextColor3 = Color3.fromRGB(150, 150, 150)
+        end
+        
+        if bag > 0 then
+            bagCount.TextColor3 = Color3.fromRGB(100, 255, 100)
+        else
+            bagCount.TextColor3 = Color3.fromRGB(150, 150, 150)
+        end
+    end)
+end
+
+-- ========== FUNGSI AUTO MS ==========
+local function interact()
+    pcall(function()
+        mouse1press()
+        task.wait(0.05)
+        mouse1release()
+        mousemoverel(math.random(-2, 2), math.random(-2, 2))
+    end)
+end
+
+local function holdItem(itemName)
+    pcall(function()
+        if LocalPlayer and LocalPlayer:FindFirstChild("Backpack") then
+            for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+                if tool:IsA("Tool") then
+                    local toolName = string.lower(tool.Name)
+                    local searchName = string.lower(itemName)
+                    
+                    if string.find(toolName, searchName) then
+                        tool.Parent = LocalPlayer.Character
+                        task.wait(0.2)
+                        return true
+                    end
+                end
+            end
+        end
+    end)
+    return false
+end
+
+local function lookAt(itemName)
+    pcall(function()
+        local char = LocalPlayer.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        
+        local root = char.HumanoidRootPart
+        local searchName = string.lower(itemName)
+        
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("Part") or obj:IsA("MeshPart") then
+                local objName = string.lower(obj.Name)
+                if string.find(objName, searchName) then
+                    local dist = (root.Position - obj.Position).Magnitude
+                    if dist < 15 then
+                        root.CFrame = CFrame.lookAt(root.Position, Vector3.new(obj.Position.X, root.Position.Y, obj.Position.Z))
+                        return
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ========== MAIN LOOP ==========
+local function autoMSLoop()
+    while AutoMS_Running do
+        local success = pcall(function()
+            -- STEP 1: WATER
+            statusValue.Text = "RUNNING"
+            statusValue.TextColor3 = Color3.fromRGB(100, 255, 100)
+            phaseValue.Text = "Water"
+            timerValue.Text = "0s"
+            holdItem("water")
+            lookAt("water")
+            task.wait(0.3)
+            interact()
+            updateInventory()
+            
+            -- Tunggu 20 detik
+            for i = 1, 20 do
+                if not AutoMS_Running then return end
+                timerValue.Text = i .. "/20s"
+                updateInventory()
+                task.wait(1)
+            end
+            
+            -- STEP 2: SUGAR
+            phaseValue.Text = "Sugar"
+            timerValue.Text = "0s"
+            holdItem("sugar")
+            lookAt("sugar")
+            task.wait(0.3)
+            interact()
+            updateInventory()
+            
+            -- ===== DELAY 1 DETIK =====
+            phaseValue.Text = "Delay 1s"
+            timerValue.Text = "1s"
+            task.wait(1)
+            updateInventory()
+            -- =========================
+            
+            -- STEP 3: GELATIN
+            phaseValue.Text = "Gelatin"
+            timerValue.Text = "0s"
+            holdItem("gelatin")
+            lookAt("gelatin")
+            task.wait(0.3)
+            interact()
+            updateInventory()
+            
+            -- Tunggu 45 detik
+            for i = 1, 45 do
+                if not AutoMS_Running then return end
+                phaseValue.Text = "Ferment"
+                timerValue.Text = i .. "/45s"
+                updateInventory()
+                task.wait(1)
+            end
+            
+            -- STEP 4: BAG
+            phaseValue.Text = "Bag"
+            timerValue.Text = "0s"
+            holdItem("bag")
+            lookAt("bag")
+            task.wait(0.3)
+            interact()
+            updateInventory()
+            
+            phaseValue.Text = "Complete"
+            timerValue.Text = "Done"
+            task.wait(2)
+            updateInventory()
+        end)
+        
+        if not success then
+            statusValue.Text = "ERROR"
+            statusValue.TextColor3 = Color3.fromRGB(255, 0, 0)
+            task.wait(2)
+        end
+    end
+    
+    statusValue.Text = "OFF"
+    statusValue.TextColor3 = Color3.fromRGB(255, 80, 80)
+    phaseValue.Text = "Water"
+    timerValue.Text = "0s"
+end
+
+-- ========== BUTTON FUNCTIONS ==========
+startBtn.MouseButton1Click:Connect(function()
+    if not AutoMS_Running then
+        AutoMS_Running = true
+        statusValue.Text = "STARTING"
+        statusValue.TextColor3 = Color3.fromRGB(255, 255, 0)
+        task.spawn(autoMSLoop)
+    end
+end)
+
+stopBtn.MouseButton1Click:Connect(function()
+    AutoMS_Running = false
+    statusValue.Text = "OFF"
+    statusValue.TextColor3 = Color3.fromRGB(255, 80, 80)
+    phaseValue.Text = "Water"
+    timerValue.Text = "0s"
+end)
+
+-- PageUp toggle
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.PageUp then
+        if AutoMS_Running then
+            AutoMS_Running = false
+            statusValue.Text = "OFF"
+            statusValue.TextColor3 = Color3.fromRGB(255, 80, 80)
+            phaseValue.Text = "Water"
+            timerValue.Text = "0s"
+        else
+            AutoMS_Running = true
+            statusValue.Text = "STARTING"
+            statusValue.TextColor3 = Color3.fromRGB(255, 255, 0)
+            task.spawn(autoMSLoop)
+        end
+    end
+end)
+
+-- Update inventory tiap 1 detik
+task.spawn(function()
+    while true do
+        updateInventory()
+        task.wait(1)
+    end
+end)
+
+print("=== RAZOR KACUNG - INVENTORY TRACKER ===")
+print("Fitur:")
+print("- Lihat jumlah Water, Gelatin, Sugar Block, Empty Bag")
+print("- Auto MS dengan urutan Water → Sugar → Gelatin → Bag")
+print("- ⏱️ DELAY 1 DETIK antara Sugar dan Gelatin")
+print("- 🔽 Tombol Minimize (kecilin GUI)")
+print("- Update real-time tiap 1 detik")
+print("PageUp / Klik START/STOP")
+print("========================================")
