@@ -91,7 +91,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -105, 1, 0)
 title.Position = UDim2.new(0, 15, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "V7x Store"
+title.Text = "MAJESTY ONTOP"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextStrokeColor3 = Color3.fromRGB(150, 0, 255)
 title.TextStrokeTransparency = 0.4
@@ -847,4 +847,5 @@ print("- ⏱️ DELAY 1 DETIK antara Sugar dan Gelatin")
 print("- 🔽 Tombol Minimize (kecilin GUI)")
 print("- Update real-time tiap 1 detik")
 print("PageUp / Klik START/STOP")
+
 print("========================================")
