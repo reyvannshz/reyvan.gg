@@ -87,7 +87,7 @@ local minKeybindBtnRef = nil                     -- referensi tombol di UI setti
 -- Tunggu character spawn
 repeat task.wait() until LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
 
--- ========== GUI MAJESTY - TEMA VALARY.GG STYLE ==========
+-- ========== GUI MAJESTY - TEMA MJS STYLE ==========
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MAJESTY ONTOP"
 screenGui.ResetOnSpawn = false
@@ -98,7 +98,7 @@ if not guiParentOk then pcall(function() screenGui.Parent = gethui(); guiParentO
 if not guiParentOk then pcall(function() screenGui.Parent = game:GetService("CoreGui"); guiParentOk = true end) end
 if not guiParentOk then screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- ===== WARNA TEMA VALARY =====
+-- ===== WARNA TEMA MJS =====
 local C = {
     bg       = Color3.fromRGB(18, 18, 18),      -- hitam pekat utama
     topbar   = Color3.fromRGB(24, 24, 24),      -- titlebar sedikit lebih terang
@@ -133,7 +133,7 @@ mainFrame.Parent = screenGui
 mkCorner(mainFrame, 8)
 mkStroke(mainFrame, 1, C.border)
 
--- ===== TITLE BAR (valary.gg style) =====
+-- ===== TITLE BAR (majesty.gg style) =====
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 36)
 titleBar.BackgroundColor3 = C.topbar
@@ -149,7 +149,7 @@ tbLine.BackgroundColor3 = C.border
 tbLine.BorderSizePixel = 0
 tbLine.Parent = titleBar
 
--- Title text kiri: "valary.gg | South Bronx : The Trenches"
+-- Title text kiri: "majesty.gg | South Bronx : The Trenches"
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -100, 1, 0)
 titleLabel.Position = UDim2.new(0, 12, 0, 0)
