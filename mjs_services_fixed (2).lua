@@ -1456,7 +1456,7 @@ end
 
 
 
--- ===== BOTTOM NAV BAR (valary.gg style) =====
+-- ===== BOTTOM NAV BAR  =====
 local tabDefs = {
     {icon="⚙️", label="Auto MS",   page=pageAuto},
     {icon="👁",  label="General",   page=pageEsp},
